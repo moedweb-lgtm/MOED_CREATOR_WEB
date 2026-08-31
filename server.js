@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 3000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const MOED_KB_URL = process.env.MOED_KB_URL;
+
 const sessions = new Map();
 
 const FALLBACK_KB = {
@@ -28,14 +29,14 @@ const FALLBACK_KB = {
       description: "Trabajador de MOED.",
       content: [
         "Los trabajadores pueden pedir ayuda sobre tareas, soporte, organizacion y funcionamiento interno.",
-        "Deben recibir respuestas mas practicas y orientadas al trabajo."
+        "Deben recibir respuestas practicas y orientadas al trabajo."
       ]
     },
     moderador: {
       description: "Moderador de MOED.",
       content: [
         "Los moderadores pueden gestionar soporte, revisar problemas, coordinar trabajadores y controlar informacion importante.",
-        "Deben recibir respuestas mas completas, con pasos claros y decisiones recomendadas."
+        "Deben recibir respuestas completas, con pasos claros y decisiones recomendadas."
       ]
     }
   }
@@ -148,7 +149,7 @@ app.post("/api/chat", async (req, res) => {
       `Pregunta del usuario:\n${String(message || "")}`;
 
     const geminiResponse = await fetch(
-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
