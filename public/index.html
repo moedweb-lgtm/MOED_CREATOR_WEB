@@ -6,109 +6,29 @@
   <title>MOED Creator</title>
   <style>
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111827;
-      color: #f9fafb;
-    }
-    .layout {
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 280px 1fr;
-    }
-    aside {
-      background: #0b1220;
-      padding: 18px;
-      border-right: 1px solid #263244;
-    }
-    main {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    h1 { margin: 0 0 16px; font-size: 24px; }
-    h2 { margin: 0 0 12px; font-size: 18px; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #111827; color: white; }
+    .layout { min-height: 100vh; display: grid; grid-template-columns: 280px 1fr; }
+    aside { background: #0b1220; padding: 18px; border-right: 1px solid #263244; }
+    main { height: 100vh; display: flex; flex-direction: column; }
+    h1 { margin: 0 0 16px; }
     input, select, textarea, button {
-      width: 100%;
-      padding: 12px;
-      margin: 7px 0;
-      border: 0;
-      border-radius: 8px;
-      font-size: 15px;
+      width: 100%; margin: 7px 0; padding: 12px; border: 0; border-radius: 8px; font-size: 15px;
     }
-    input, select, textarea {
-      background: #1f2937;
-      color: white;
-      outline: 1px solid #374151;
-    }
-    button {
-      background: #10b981;
-      color: #04130f;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    button.secondary {
-      background: #374151;
-      color: white;
-    }
-    button.google {
-      background: white;
-      color: #111827;
-    }
+    input, select, textarea { background: #1f2937; color: white; outline: 1px solid #374151; }
+    button { background: #10b981; color: #04130f; font-weight: 700; cursor: pointer; }
+    button.secondary { background: #374151; color: white; }
+    button.google { background: white; color: #111827; }
     .hidden { display: none; }
     .error { color: #fca5a5; font-size: 14px; }
     .muted { color: #9ca3af; font-size: 13px; }
-    .chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
-    }
-    .msg {
-      max-width: 820px;
-      margin: 0 auto 18px;
-      padding: 14px 16px;
-      border-radius: 8px;
-      line-height: 1.45;
-      white-space: pre-wrap;
-    }
+    .chat { flex: 1; overflow-y: auto; padding: 24px; }
+    .msg { max-width: 850px; margin: 0 auto 16px; padding: 14px 16px; border-radius: 8px; white-space: pre-wrap; line-height: 1.45; }
     .you { background: #1f2937; }
     .bot { background: #10251f; }
-    .bar {
-      border-top: 1px solid #263244;
-      padding: 16px 24px;
-      background: #111827;
-    }
-    .composer {
-      max-width: 820px;
-      margin: auto;
-      display: flex;
-      gap: 10px;
-    }
-    .composer textarea {
-      min-height: 52px;
-      max-height: 130px;
-      resize: vertical;
-      margin: 0;
-    }
-    .composer button {
-      width: 120px;
-      margin: 0;
-    }
-    .userbox {
-      margin-top: 16px;
-      padding: 12px;
-      background: #111827;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-    @media (max-width: 760px) {
-      .layout { grid-template-columns: 1fr; }
-      aside { border-right: 0; border-bottom: 1px solid #263244; }
-      main { height: calc(100vh - 360px); min-height: 520px; }
-      .composer { flex-direction: column; }
-      .composer button { width: 100%; }
-    }
+    .bar { border-top: 1px solid #263244; padding: 16px 24px; }
+    .composer { max-width: 850px; margin: auto; display: flex; gap: 10px; }
+    .composer textarea { margin: 0; min-height: 52px; resize: vertical; }
+    .composer button { width: 120px; margin: 0; }
   </style>
 </head>
 <body>
@@ -117,47 +37,44 @@
       <h1>MOED Creator</h1>
 
       <section id="auth">
-        <h2>Entrar</h2>
         <button class="google" onclick="loginGoogle()">Entrar con Google</button>
-
-        <p class="muted">O entra con email:</p>
         <input id="email" type="email" placeholder="Correo" />
         <input id="password" type="password" placeholder="Contraseña" />
-
         <button onclick="loginEmail()">Iniciar sesión</button>
         <button class="secondary" onclick="registerEmail()">Registrarse</button>
-
         <p id="authError" class="error"></p>
       </section>
 
       <section id="roleBox" class="hidden">
-        <h2>Rol</h2>
         <select id="role">
           <option value="visitante">Visitante</option>
-          <option value="trabajador">Trabajador</option>
           <option value="moderador">Moderador</option>
         </select>
-
         <input id="accessCode" placeholder="Código de acceso" />
         <button onclick="enterMoed()">Entrar a MOED</button>
         <p id="roleError" class="error"></p>
       </section>
 
-      <section id="sessionBox" class="userbox hidden">
-        <div id="userInfo"></div>
+      <section id="modBox" class="hidden">
+        <h3>Moderador</h3>
+        <input id="codeLabel" placeholder="Nombre del código" />
+        <button onclick="createVisitorCode()">Crear código visitante</button>
+        <p id="newCode"></p>
+      </section>
+
+      <section id="sessionBox" class="hidden">
+        <p id="userInfo"></p>
+        <button class="secondary" onclick="newChat()">Nuevo chat</button>
         <button class="secondary" onclick="logout()">Salir</button>
       </section>
 
-      <p class="muted">
-        MOED Creator. Creado por mamarcosane. Asistente: Vento. Proyecto MOED 2026.
-      </p>
+      <p class="muted">MOED Creator · mamarcosane · Vento · 2026</p>
     </aside>
 
     <main>
       <div id="chat" class="chat">
         <div class="msg bot">MOED Creator: Inicia sesión para empezar.</div>
       </div>
-
       <div class="bar">
         <div class="composer">
           <textarea id="message" placeholder="Escribe tu mensaje..."></textarea>
@@ -188,12 +105,13 @@
       measurementId: "G-QBTKECGGS6"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    const firebaseApp = initializeApp(firebaseConfig);
+    const auth = getAuth(firebaseApp);
     const provider = new GoogleAuthProvider();
 
     let currentUser = null;
     let token = "";
+    let chatId = "";
 
     window.loginGoogle = async function () {
       try {
@@ -202,33 +120,29 @@
         currentUser = result.user;
         showRoleBox();
       } catch (error) {
-        showAuthError(error.message);
+        authError.textContent = error.message;
       }
     };
 
     window.registerEmail = async function () {
       try {
         clearErrors();
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const result = await createUserWithEmailAndPassword(auth, email, password);
+        const result = await createUserWithEmailAndPassword(auth, email.value, password.value);
         currentUser = result.user;
         showRoleBox();
       } catch (error) {
-        showAuthError(error.message);
+        authError.textContent = error.message;
       }
     };
 
     window.loginEmail = async function () {
       try {
         clearErrors();
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const result = await signInWithEmailAndPassword(auth, email, password);
+        const result = await signInWithEmailAndPassword(auth, email.value, password.value);
         currentUser = result.user;
         showRoleBox();
       } catch (error) {
-        showAuthError(error.message);
+        authError.textContent = error.message;
       }
     };
 
@@ -236,100 +150,105 @@
       try {
         clearErrors();
 
-        const role = document.getElementById("role").value;
-        const code = document.getElementById("accessCode").value;
+        const idToken = await currentUser.getIdToken();
+        const selectedRole = role.value;
 
         const res = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: currentUser.displayName || currentUser.email,
-            email: currentUser.email,
-            uid: currentUser.uid,
-            role,
-            code
+            idToken,
+            role: selectedRole,
+            code: accessCode.value
           })
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-          document.getElementById("roleError").textContent = data.error || "No se pudo entrar.";
+          roleError.textContent = data.error || "No se pudo entrar.";
           return;
         }
 
         token = data.token;
 
+        auth.classList?.add;
         document.getElementById("auth").classList.add("hidden");
-        document.getElementById("roleBox").classList.add("hidden");
-        document.getElementById("sessionBox").classList.remove("hidden");
-        document.getElementById("userInfo").textContent =
-          `${data.name} · modo ${data.role}`;
+        roleBox.classList.add("hidden");
+        sessionBox.classList.remove("hidden");
+        userInfo.textContent = `${data.name} · ${data.role}`;
 
-        setChat(`MOED Creator: Hola ${data.name}. Ya puedes preguntarme cualquier cosa sobre MOED.`);
+        if (data.role === "moderador") {
+          modBox.classList.remove("hidden");
+        }
+
+        setChat(`MOED Creator: Hola ${data.name}. Estás en modo ${data.role}.`);
       } catch (error) {
-        document.getElementById("roleError").textContent = error.message;
+        roleError.textContent = error.message;
       }
     };
 
+    window.createVisitorCode = async function () {
+      const res = await fetch("/api/codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, label: codeLabel.value })
+      });
+
+      const data = await res.json();
+      newCode.textContent = data.code ? `Código creado: ${data.code}` : data.error;
+    };
+
     window.sendMessage = async function () {
-      const box = document.getElementById("message");
-      const text = box.value.trim();
-
-      if (!token) {
-        addMessage("MOED Creator", "Primero inicia sesión.", "bot");
-        return;
-      }
-
+      const text = message.value.trim();
       if (!text) return;
 
       addMessage("Tú", text, "you");
-      box.value = "";
-
+      message.value = "";
       addMessage("MOED Creator", "Pensando...", "bot");
 
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, message: text })
+        body: JSON.stringify({ token, chatId, message: text })
       });
 
       const data = await res.json();
       removeThinking();
-      addMessage("MOED Creator", data.reply || data.error || "Error.", res.ok ? "bot" : "bot");
+
+      if (data.chatId) chatId = data.chatId;
+
+      addMessage("MOED Creator", data.reply || data.error || "Error.", "bot");
+    };
+
+    window.newChat = function () {
+      chatId = "";
+      setChat("MOED Creator: Nuevo chat iniciado.");
     };
 
     window.logout = async function () {
       await signOut(auth);
       currentUser = null;
       token = "";
-      document.getElementById("auth").classList.remove("hidden");
-      document.getElementById("roleBox").classList.add("hidden");
-      document.getElementById("sessionBox").classList.add("hidden");
-      setChat("MOED Creator: Sesión cerrada.");
+      chatId = "";
+      location.reload();
     };
 
     function showRoleBox() {
-      document.getElementById("roleBox").classList.remove("hidden");
-      document.getElementById("authError").textContent = "";
-    }
-
-    function showAuthError(text) {
-      document.getElementById("authError").textContent = text;
+      roleBox.classList.remove("hidden");
     }
 
     function clearErrors() {
-      document.getElementById("authError").textContent = "";
-      document.getElementById("roleError").textContent = "";
+      authError.textContent = "";
+      roleError.textContent = "";
     }
 
     function setChat(text) {
-      document.getElementById("chat").innerHTML = "";
+      chat.innerHTML = "";
       addMessage("", text, "bot");
     }
 
     function addMessage(who, text, cls) {
-      const chat = document.getElementById("chat");
       const div = document.createElement("div");
       div.className = "msg " + cls;
       div.textContent = who ? `${who}: ${text}` : text;
@@ -338,7 +257,6 @@
     }
 
     function removeThinking() {
-      const chat = document.getElementById("chat");
       const last = chat.lastElementChild;
       if (last && last.textContent.includes("Pensando...")) {
         last.remove();
