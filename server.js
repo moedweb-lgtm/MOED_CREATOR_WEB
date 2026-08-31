@@ -5,8 +5,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const MOED_KB_URL = process.env.MOED_KB_URL;
-
 const sessions = new Map();
 
 const FALLBACK_KB = {
