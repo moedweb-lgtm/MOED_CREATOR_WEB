@@ -5,11 +5,41 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const MOED_KB_URL =
-  process.env.MOED_KB_URL ||
-  "https://cloud.vento.build/networks/mamarcosane/moed-kb.json";
+const MOED_KB_URL = process.env.MOED_KB_URL;
 
 const sessions = new Map();
+
+const FALLBACK_KB = {
+  rules: [
+    "MOED Creator debe responder en espanol claro y directo.",
+    "No debe inventar informacion.",
+    "Debe adaptar la respuesta al rol del usuario.",
+    "Si no sabe algo, debe pedir mas contexto."
+  ],
+  roles: {
+    visitante: {
+      description: "Visitante de MOED.",
+      content: [
+        "Los visitantes pueden preguntar informacion general sobre MOED.",
+        "Los visitantes reciben ayuda basica y orientacion."
+      ]
+    },
+    trabajador: {
+      description: "Trabajador de MOED.",
+      content: [
+        "Los trabajadores pueden pedir ayuda sobre tareas, soporte, organizacion y funcionamiento interno.",
+        "Deben recibir respuestas mas practicas y orientadas al trabajo."
+      ]
+    },
+    moderador: {
+      description: "Moderador de MOED.",
+      content: [
+        "Los moderadores pueden gestionar soporte, revisar problemas, coordinar trabajadores y controlar informacion importante.",
+        "Deben recibir respuestas mas completas, con pasos claros y decisiones recomendadas."
+      ]
+    }
+  }
+};
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static("public"));
@@ -31,13 +61,28 @@ function checkAccess(role, code) {
 }
 
 async function loadKnowledge() {
-  const response = await fetch(MOED_KB_URL);
-
-  if (!response.ok) {
-    throw new Error("No pude cargar la base de conocimiento de MOED.");
+  if (!MOED_KB_URL) {
+    return FALLBACK_KB;
   }
 
-  return response.json();
+  try {
+    const response = await fetch(MOED_KB_URL);
+
+    if (!response.ok) {
+      return FALLBACK_KB;
+    }
+
+    const text = await response.text();
+
+    if (text.trim().startsWith("<")) {
+      return FALLBACK_KB;
+    }
+
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("No pude cargar MOED_KB_URL, usando base interna:", error);
+    return FALLBACK_KB;
+  }
 }
 
 function getRoleKnowledge(kb, role) {
