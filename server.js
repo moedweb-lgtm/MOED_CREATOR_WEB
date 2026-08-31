@@ -3,41 +3,30 @@ import crypto from "crypto";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 const MOED_KB_URL = process.env.MOED_KB_URL;
 
 const sessions = new Map();
 
 const FALLBACK_KB = {
   rules: [
-    "MOED Creator debe responder en espanol claro y directo.",
-    "No debe inventar informacion.",
-    "Debe adaptar la respuesta al rol del usuario.",
-    "Si no sabe algo, debe pedir mas contexto."
+    "Responde en espanol claro y directo.",
+    "No inventes informacion.",
+    "Adapta la respuesta al rol del usuario."
   ],
   roles: {
     visitante: {
       description: "Visitante de MOED.",
-      content: [
-        "Los visitantes pueden preguntar informacion general sobre MOED.",
-        "Los visitantes reciben ayuda basica y orientacion."
-      ]
+      content: ["Puede pedir informacion general y ayuda basica."]
     },
     trabajador: {
       description: "Trabajador de MOED.",
-      content: [
-        "Los trabajadores pueden pedir ayuda sobre tareas, soporte, organizacion y funcionamiento interno.",
-        "Deben recibir respuestas practicas y orientadas al trabajo."
-      ]
+      content: ["Puede pedir ayuda sobre tareas, soporte y organizacion interna."]
     },
     moderador: {
       description: "Moderador de MOED.",
-      content: [
-        "Los moderadores pueden gestionar soporte, revisar problemas, coordinar trabajadores y controlar informacion importante.",
-        "Deben recibir respuestas completas, con pasos claros y decisiones recomendadas."
-      ]
+      content: ["Puede gestionar soporte, revisar problemas y coordinar trabajadores."]
     }
   }
 };
@@ -49,39 +38,23 @@ function checkAccess(role, code) {
   if (role === "visitante") {
     return !process.env.VISITOR_ACCESS_CODE || code === process.env.VISITOR_ACCESS_CODE;
   }
-
-  if (role === "trabajador") {
-    return code === process.env.WORKER_ACCESS_CODE;
-  }
-
-  if (role === "moderador") {
-    return code === process.env.MODERATOR_ACCESS_CODE;
-  }
-
+  if (role === "trabajador") return code === process.env.WORKER_ACCESS_CODE;
+  if (role === "moderador") return code === process.env.MODERATOR_ACCESS_CODE;
   return false;
 }
 
 async function loadKnowledge() {
-  if (!MOED_KB_URL) {
-    return FALLBACK_KB;
-  }
+  if (!MOED_KB_URL) return FALLBACK_KB;
 
   try {
     const response = await fetch(MOED_KB_URL);
-
-    if (!response.ok) {
-      return FALLBACK_KB;
-    }
+    if (!response.ok) return FALLBACK_KB;
 
     const text = await response.text();
-
-    if (text.trim().startsWith("<")) {
-      return FALLBACK_KB;
-    }
+    if (text.trim().startsWith("<")) return FALLBACK_KB;
 
     return JSON.parse(text);
-  } catch (error) {
-    console.error("No pude cargar MOED_KB_URL, usando base interna:", error);
+  } catch {
     return FALLBACK_KB;
   }
 }
@@ -97,10 +70,10 @@ function getRoleKnowledge(kb, role) {
 }
 
 app.post("/api/login", (req, res) => {
-  const { name, role, code } = req.body || {};
+  const { name, email, uid, role, code } = req.body || {};
 
-  if (!name || !role) {
-    return res.status(400).json({ error: "Falta nombre o rol." });
+  if (!name || !email || !uid || !role) {
+    return res.status(400).json({ error: "Faltan datos de usuario." });
   }
 
   if (!checkAccess(role, code || "")) {
@@ -110,12 +83,14 @@ app.post("/api/login", (req, res) => {
   const token = crypto.randomUUID();
 
   sessions.set(token, {
-    name: String(name).slice(0, 50),
+    name: String(name).slice(0, 60),
+    email: String(email).slice(0, 120),
+    uid: String(uid),
     role,
     createdAt: Date.now()
   });
 
-  res.json({ token, role, name });
+  res.json({ token, name, email, role });
 });
 
 app.post("/api/chat", async (req, res) => {
@@ -124,66 +99,46 @@ app.post("/api/chat", async (req, res) => {
     const session = sessions.get(token);
 
     if (!session) {
-      return res.status(401).json({
-        error: "Sesion no valida. Inicia sesion otra vez."
-      });
+      return res.status(401).json({ error: "Sesion no valida." });
     }
 
     if (!GEMINI_API_KEY) {
-      return res.status(500).json({
-        error: "Falta GEMINI_API_KEY en Render."
-      });
+      return res.status(500).json({ error: "Falta GEMINI_API_KEY en Render." });
     }
 
     const kb = await loadKnowledge();
     const roleKnowledge = getRoleKnowledge(kb, session.role);
 
     const prompt =
-      `Eres MOED Creator, una IA de soporte para MOED.\n` +
-      `Usuario: ${session.name}\n` +
-      `Rol: ${session.role}\n\n` +
-      `Responde en espanol claro y directo.\n` +
-      `No inventes informacion. Si no sabes algo, pide mas contexto.\n` +
-      `Adapta la respuesta al rol del usuario.\n\n` +
-      `Informacion de MOED para este rol:\n${roleKnowledge}\n\n` +
-      `Pregunta del usuario:\n${String(message || "")}`;
+      `Eres MOED Creator, una IA tipo ChatGPT para MOED.\n` +
+      `Usuario: ${session.name}\nEmail: ${session.email}\nRol: ${session.role}\n\n` +
+      `Responde en espanol, claro y util.\n` +
+      `No inventes informacion. Si falta contexto, pregunta.\n\n` +
+      `Informacion MOED para este rol:\n${roleKnowledge}\n\n` +
+      `Mensaje:\n${String(message || "")}`;
 
     const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 800
-          }
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.5, maxOutputTokens: 900 }
         })
       }
     );
 
-    if (!geminiResponse.ok) {
-      throw new Error(await geminiResponse.text());
-    }
+    if (!geminiResponse.ok) throw new Error(await geminiResponse.text());
 
     const data = await geminiResponse.json();
     const reply =
       data.candidates?.[0]?.content?.parts?.[0]?.text ||
       "No pude generar respuesta.";
 
-    res.json({ reply, role: session.role });
+    res.json({ reply });
   } catch (error) {
-    console.error("ERROR MOED CREATOR:", error);
-    res.status(500).json({
-      error: error.message || "Error interno."
-    });
+    res.status(500).json({ error: error.message || "Error interno." });
   }
 });
 
@@ -192,5 +147,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`MOED Creator web activo en puerto ${PORT}`);
+  console.log(`MOED Creator activo en puerto ${PORT}`);
 });
