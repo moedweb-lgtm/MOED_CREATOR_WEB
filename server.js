@@ -4,7 +4,7 @@ import crypto from "crypto";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const MOED_KB_URL =
   process.env.MOED_KB_URL ||
   "https://cloud.vento.build/networks/mamarcosane/moed-kb.json";
@@ -45,11 +45,9 @@ function getRoleKnowledge(kb, role) {
   const rules = Array.isArray(kb.rules) ? kb.rules : [];
   const content = Array.isArray(selected.content) ? selected.content : [];
 
-  return [
-    selected.description || "",
-    ...content,
-    ...rules
-  ].filter(Boolean).join("\n");
+  return [selected.description || "", ...content, ...rules]
+    .filter(Boolean)
+    .join("\n");
 }
 
 app.post("/api/login", (req, res) => {
@@ -85,55 +83,53 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
-    if (!GROQ_API_KEY) {
+    if (!GEMINI_API_KEY) {
       return res.status(500).json({
-        error: "Falta GROQ_API_KEY en Render."
+        error: "Falta GEMINI_API_KEY en Render."
       });
     }
 
     const kb = await loadKnowledge();
     const roleKnowledge = getRoleKnowledge(kb, session.role);
 
-    const groqResponse = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
+    const prompt =
+      `Eres MOED Creator, una IA de soporte para MOED.\n` +
+      `Usuario: ${session.name}\n` +
+      `Rol: ${session.role}\n\n` +
+      `Responde en espanol claro y directo.\n` +
+      `No inventes informacion. Si no sabes algo, pide mas contexto.\n` +
+      `Adapta la respuesta al rol del usuario.\n\n` +
+      `Informacion de MOED para este rol:\n${roleKnowledge}\n\n` +
+      `Pregunta del usuario:\n${String(message || "")}`;
+
+    const geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${GROQ_API_KEY}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
-          messages: [
+          contents: [
             {
-              role: "system",
-              content:
-                `Eres MOED Creator, una IA de soporte para MOED.\n` +
-                `Usuario: ${session.name}\n` +
-                `Rol: ${session.role}\n\n` +
-                `Responde en espanol claro y directo.\n` +
-                `No inventes informacion. Si no sabes algo, pide mas contexto.\n` +
-                `Adapta la respuesta al rol del usuario.\n\n` +
-                `Informacion de MOED para este rol:\n${roleKnowledge}`
-            },
-            {
-              role: "user",
-              content: String(message || "")
+              parts: [{ text: prompt }]
             }
           ],
-          temperature: 0.4,
-          max_tokens: 800
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 800
+          }
         })
       }
     );
 
-    if (!groqResponse.ok) {
-      throw new Error(await groqResponse.text());
+    if (!geminiResponse.ok) {
+      throw new Error(await geminiResponse.text());
     }
 
-    const data = await groqResponse.json();
+    const data = await geminiResponse.json();
     const reply =
-      data.choices?.[0]?.message?.content ||
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
       "No pude generar respuesta.";
 
     res.json({ reply, role: session.role });
