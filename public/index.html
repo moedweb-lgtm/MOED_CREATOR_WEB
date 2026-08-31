@@ -5,209 +5,342 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MOED Creator</title>
   <style>
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #101820;
-      color: white;
+      background: #111827;
+      color: #f9fafb;
     }
-
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+    }
+    aside {
+      background: #0b1220;
+      padding: 18px;
+      border-right: 1px solid #263244;
+    }
     main {
-      max-width: 850px;
-      margin: auto;
-      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
-
-    h1 {
-      margin-top: 0;
-    }
-
-    input,
-    select,
-    textarea,
-    button {
+    h1 { margin: 0 0 16px; font-size: 24px; }
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    input, select, textarea, button {
       width: 100%;
-      box-sizing: border-box;
-      margin: 8px 0;
       padding: 12px;
-      border-radius: 8px;
+      margin: 7px 0;
       border: 0;
-      font-size: 16px;
+      border-radius: 8px;
+      font-size: 15px;
     }
-
-    textarea {
-      min-height: 90px;
-      resize: vertical;
+    input, select, textarea {
+      background: #1f2937;
+      color: white;
+      outline: 1px solid #374151;
     }
-
     button {
-      background: #00c2a8;
-      color: #04100e;
+      background: #10b981;
+      color: #04130f;
       font-weight: 700;
       cursor: pointer;
     }
-
-    .card {
-      background: #182632;
-      padding: 18px;
-      border-radius: 10px;
-      margin-bottom: 16px;
+    button.secondary {
+      background: #374151;
+      color: white;
     }
-
+    button.google {
+      background: white;
+      color: #111827;
+    }
+    .hidden { display: none; }
+    .error { color: #fca5a5; font-size: 14px; }
+    .muted { color: #9ca3af; font-size: 13px; }
     .chat {
-      min-height: 300px;
-      max-height: 480px;
+      flex: 1;
       overflow-y: auto;
-      background: #0c131a;
-      padding: 14px;
-      border-radius: 10px;
+      padding: 24px;
+    }
+    .msg {
+      max-width: 820px;
+      margin: 0 auto 18px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      line-height: 1.45;
       white-space: pre-wrap;
     }
-
-    .hidden {
-      display: none;
+    .you { background: #1f2937; }
+    .bot { background: #10251f; }
+    .bar {
+      border-top: 1px solid #263244;
+      padding: 16px 24px;
+      background: #111827;
     }
-
-    .msg {
-      margin: 12px 0;
-      line-height: 1.45;
+    .composer {
+      max-width: 820px;
+      margin: auto;
+      display: flex;
+      gap: 10px;
     }
-
-    .you {
-      color: #8bd3ff;
+    .composer textarea {
+      min-height: 52px;
+      max-height: 130px;
+      resize: vertical;
+      margin: 0;
     }
-
-    .bot {
-      color: #a7f3d0;
+    .composer button {
+      width: 120px;
+      margin: 0;
     }
-
-    .error {
-      color: #ff9a9a;
-    }
-
-    .credits {
-      opacity: 0.8;
+    .userbox {
+      margin-top: 16px;
+      padding: 12px;
+      background: #111827;
+      border-radius: 8px;
       font-size: 14px;
-      margin-top: 18px;
+    }
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid #263244; }
+      main { height: calc(100vh - 360px); min-height: 520px; }
+      .composer { flex-direction: column; }
+      .composer button { width: 100%; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1>MOED Creator</h1>
+  <div class="layout">
+    <aside>
+      <h1>MOED Creator</h1>
 
-    <section id="login" class="card">
-      <input id="name" placeholder="Tu nombre" />
+      <section id="auth">
+        <h2>Entrar</h2>
+        <button class="google" onclick="loginGoogle()">Entrar con Google</button>
 
-      <select id="role">
-        <option value="visitante">Visitante</option>
-        <option value="trabajador">Trabajador</option>
-        <option value="moderador">Moderador</option>
-      </select>
+        <p class="muted">O entra con email:</p>
+        <input id="email" type="email" placeholder="Correo" />
+        <input id="password" type="password" placeholder="Contraseña" />
 
-      <input id="code" placeholder="Codigo de acceso" />
+        <button onclick="loginEmail()">Iniciar sesión</button>
+        <button class="secondary" onclick="registerEmail()">Registrarse</button>
 
-      <button onclick="login()">Entrar</button>
-      <p id="loginError" class="error"></p>
-    </section>
+        <p id="authError" class="error"></p>
+      </section>
 
-    <section id="app" class="card hidden">
-      <h2 id="mode"></h2>
+      <section id="roleBox" class="hidden">
+        <h2>Rol</h2>
+        <select id="role">
+          <option value="visitante">Visitante</option>
+          <option value="trabajador">Trabajador</option>
+          <option value="moderador">Moderador</option>
+        </select>
 
-      <div id="chat" class="chat"></div>
+        <input id="accessCode" placeholder="Código de acceso" />
+        <button onclick="enterMoed()">Entrar a MOED</button>
+        <p id="roleError" class="error"></p>
+      </section>
 
-      <textarea id="message" placeholder="Escribe cualquier cosa sobre MOED"></textarea>
-      <button onclick="sendMessage()">Enviar</button>
-    </section>
+      <section id="sessionBox" class="userbox hidden">
+        <div id="userInfo"></div>
+        <button class="secondary" onclick="logout()">Salir</button>
+      </section>
 
-    <p class="credits">
-      MOED Creator. Creado por mamarcosane. Asistente: Vento. Proyecto MOED 2026.
-    </p>
-  </main>
+      <p class="muted">
+        MOED Creator. Creado por mamarcosane. Asistente: Vento. Proyecto MOED 2026.
+      </p>
+    </aside>
 
-  <script>
+    <main>
+      <div id="chat" class="chat">
+        <div class="msg bot">MOED Creator: Inicia sesión para empezar.</div>
+      </div>
+
+      <div class="bar">
+        <div class="composer">
+          <textarea id="message" placeholder="Escribe tu mensaje..."></textarea>
+          <button onclick="sendMessage()">Enviar</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCjBvWQjWIxinAkitySxCepeips0SJ1FoI",
+      authDomain: "moedspeed-d67a9.firebaseapp.com",
+      projectId: "moedspeed-d67a9",
+      storageBucket: "moedspeed-d67a9.firebasestorage.app",
+      messagingSenderId: "950914239175",
+      appId: "1:950914239175:web:32f8e742a836f752618ce2",
+      measurementId: "G-QBTKECGGS6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    let currentUser = null;
     let token = "";
 
-    async function login() {
-      const loginError = document.getElementById("loginError");
-      loginError.textContent = "";
-
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: document.getElementById("name").value,
-          role: document.getElementById("role").value,
-          code: document.getElementById("code").value
-        })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        loginError.textContent = data.error || "No se pudo iniciar sesion.";
-        return;
+    window.loginGoogle = async function () {
+      try {
+        clearErrors();
+        const result = await signInWithPopup(auth, provider);
+        currentUser = result.user;
+        showRoleBox();
+      } catch (error) {
+        showAuthError(error.message);
       }
+    };
 
-      token = data.token;
+    window.registerEmail = async function () {
+      try {
+        clearErrors();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        currentUser = result.user;
+        showRoleBox();
+      } catch (error) {
+        showAuthError(error.message);
+      }
+    };
 
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("app").classList.remove("hidden");
-      document.getElementById("mode").textContent = "Modo " + data.role;
+    window.loginEmail = async function () {
+      try {
+        clearErrors();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        currentUser = result.user;
+        showRoleBox();
+      } catch (error) {
+        showAuthError(error.message);
+      }
+    };
 
-      addMessage(
-        "MOED Creator",
-        "Hola " + data.name + ". Ya puedes preguntarme cualquier cosa sobre MOED.",
-        "bot"
-      );
-    }
+    window.enterMoed = async function () {
+      try {
+        clearErrors();
 
-    async function sendMessage() {
+        const role = document.getElementById("role").value;
+        const code = document.getElementById("accessCode").value;
+
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: currentUser.displayName || currentUser.email,
+            email: currentUser.email,
+            uid: currentUser.uid,
+            role,
+            code
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          document.getElementById("roleError").textContent = data.error || "No se pudo entrar.";
+          return;
+        }
+
+        token = data.token;
+
+        document.getElementById("auth").classList.add("hidden");
+        document.getElementById("roleBox").classList.add("hidden");
+        document.getElementById("sessionBox").classList.remove("hidden");
+        document.getElementById("userInfo").textContent =
+          `${data.name} · modo ${data.role}`;
+
+        setChat(`MOED Creator: Hola ${data.name}. Ya puedes preguntarme cualquier cosa sobre MOED.`);
+      } catch (error) {
+        document.getElementById("roleError").textContent = error.message;
+      }
+    };
+
+    window.sendMessage = async function () {
       const box = document.getElementById("message");
       const text = box.value.trim();
 
+      if (!token) {
+        addMessage("MOED Creator", "Primero inicia sesión.", "bot");
+        return;
+      }
+
       if (!text) return;
 
-      addMessage("Tu", text, "you");
+      addMessage("Tú", text, "you");
       box.value = "";
 
       addMessage("MOED Creator", "Pensando...", "bot");
 
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          token,
-          message: text
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, message: text })
       });
 
       const data = await res.json();
+      removeThinking();
+      addMessage("MOED Creator", data.reply || data.error || "Error.", res.ok ? "bot" : "bot");
+    };
 
-      removeLastThinking();
-      addMessage("MOED Creator", data.reply || data.error || "Error.", res.ok ? "bot" : "error");
+    window.logout = async function () {
+      await signOut(auth);
+      currentUser = null;
+      token = "";
+      document.getElementById("auth").classList.remove("hidden");
+      document.getElementById("roleBox").classList.add("hidden");
+      document.getElementById("sessionBox").classList.add("hidden");
+      setChat("MOED Creator: Sesión cerrada.");
+    };
+
+    function showRoleBox() {
+      document.getElementById("roleBox").classList.remove("hidden");
+      document.getElementById("authError").textContent = "";
+    }
+
+    function showAuthError(text) {
+      document.getElementById("authError").textContent = text;
+    }
+
+    function clearErrors() {
+      document.getElementById("authError").textContent = "";
+      document.getElementById("roleError").textContent = "";
+    }
+
+    function setChat(text) {
+      document.getElementById("chat").innerHTML = "";
+      addMessage("", text, "bot");
     }
 
     function addMessage(who, text, cls) {
       const chat = document.getElementById("chat");
       const div = document.createElement("div");
-
       div.className = "msg " + cls;
-      div.textContent = who + ": " + text;
-
+      div.textContent = who ? `${who}: ${text}` : text;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function removeLastThinking() {
+    function removeThinking() {
       const chat = document.getElementById("chat");
       const last = chat.lastElementChild;
-
-      if (last && last.textContent === "MOED Creator: Pensando...") {
+      if (last && last.textContent.includes("Pensando...")) {
         last.remove();
       }
     }
