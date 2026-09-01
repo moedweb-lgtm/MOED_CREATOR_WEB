@@ -6,212 +6,61 @@
   <title>MOED Creator</title>
   <style>
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #070b14;
-      color: #f8fafc;
-    }
-
+    body { margin: 0; font-family: Arial, sans-serif; background: #070b14; color: #f8fafc; }
     .hidden { display: none !important; }
-
     .screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      background:
-        radial-gradient(circle at top, rgba(56,189,248,0.18), transparent 34%),
-        #070b14;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+      background: radial-gradient(circle at top, rgba(56,189,248,0.18), transparent 34%), #070b14;
     }
-
-    .login-card {
-      width: 100%;
-      max-width: 390px;
-      text-align: center;
-    }
-
+    .login-card { width: 100%; max-width: 390px; text-align: center; }
     .logo {
-      width: 76px;
-      height: 76px;
-      margin: 0 auto 22px;
-      border-radius: 18px;
+      width: 76px; height: 76px; margin: 0 auto 22px; border-radius: 18px;
       background: linear-gradient(135deg, #38bdf8, #10b981);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #041014;
-      font-size: 30px;
-      font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      color: #041014; font-size: 30px; font-weight: 900;
       box-shadow: 0 0 35px rgba(56,189,248,0.35);
     }
-
-    h1 {
-      margin: 0 0 24px;
-      font-size: 30px;
-      letter-spacing: 0;
+    h1 { margin: 0 0 24px; font-size: 30px; }
+    input, textarea, button {
+      width: 100%; border: 0; border-radius: 8px; padding: 13px; margin: 8px 0; font-size: 15px;
     }
+    input, textarea { background: #111827; color: white; outline: 1px solid #263244; }
+    button { background: #2563eb; color: white; font-weight: 700; cursor: pointer; }
+    button.secondary { background: #1f2937; }
+    button.google { background: white; color: #111827; }
+    .link { color: #93c5fd; cursor: pointer; font-size: 14px; }
+    .muted { color: #9ca3af; font-size: 13px; }
+    .error { color: #fca5a5; font-size: 14px; min-height: 18px; }
 
-    input, select, textarea, button {
-      width: 100%;
-      border: 0;
-      border-radius: 8px;
-      padding: 13px;
-      margin: 8px 0;
-      font-size: 15px;
-    }
-
-    input, select, textarea {
-      background: #111827;
-      color: white;
-      outline: 1px solid #263244;
-    }
-
-    button {
-      background: #2563eb;
-      color: white;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    button:hover { filter: brightness(1.08); }
-
-    button.secondary {
-      background: #1f2937;
-    }
-
-    button.google {
-      background: white;
-      color: #111827;
-    }
-
-    .link {
-      color: #93c5fd;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .muted {
-      color: #9ca3af;
-      font-size: 13px;
-    }
-
-    .error {
-      color: #fca5a5;
-      font-size: 14px;
-      min-height: 18px;
-    }
-
-    .app {
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      background: #0b1020;
-    }
-
-    aside {
-      background: #080f1d;
-      border-right: 1px solid #1f2937;
-      padding: 16px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 21px;
-      font-weight: 800;
-      margin-bottom: 16px;
-    }
-
+    .app { min-height: 100vh; display: grid; grid-template-columns: 290px 1fr; background: #0b1020; }
+    aside { background: #080f1d; border-right: 1px solid #1f2937; padding: 16px; overflow-y: auto; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 800; margin-bottom: 16px; }
     .mini-logo {
-      width: 34px;
-      height: 34px;
-      border-radius: 9px;
+      width: 34px; height: 34px; border-radius: 9px;
       background: linear-gradient(135deg, #38bdf8, #10b981);
-      color: #041014;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
+      color: #041014; display: flex; align-items: center; justify-content: center; font-weight: 900;
     }
+    .panel { margin-top: 14px; padding-top: 14px; border-top: 1px solid #1f2937; }
+    .code-result { word-break: break-word; color: #86efac; font-size: 14px; }
+    .chat-list button { text-align: left; font-weight: 500; background: #111827; color: #d1d5db; }
 
-    main {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 28px 18px;
-    }
-
+    main { height: 100vh; display: flex; flex-direction: column; }
+    .chat { flex: 1; overflow-y: auto; padding: 28px 18px; }
     .msg {
-      max-width: 850px;
-      margin: 0 auto 16px;
-      padding: 15px 17px;
-      border-radius: 8px;
-      line-height: 1.45;
-      white-space: pre-wrap;
+      max-width: 850px; margin: 0 auto 16px; padding: 15px 17px;
+      border-radius: 8px; line-height: 1.45; white-space: pre-wrap;
     }
-
     .you { background: #1f2937; }
     .bot { background: #10251f; }
-
-    .bar {
-      border-top: 1px solid #1f2937;
-      padding: 16px;
-      background: #0b1020;
-    }
-
-    .composer {
-      max-width: 850px;
-      margin: auto;
-      display: flex;
-      gap: 10px;
-    }
-
-    .composer textarea {
-      margin: 0;
-      min-height: 54px;
-      max-height: 140px;
-      resize: vertical;
-    }
-
-    .composer button {
-      width: 120px;
-      margin: 0;
-    }
-
-    .panel {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid #1f2937;
-    }
-
-    .code-result {
-      word-break: break-word;
-      color: #86efac;
-      font-size: 14px;
-    }
+    .bar { border-top: 1px solid #1f2937; padding: 16px; background: #0b1020; }
+    .composer { max-width: 850px; margin: auto; display: flex; gap: 10px; }
+    .composer textarea { margin: 0; min-height: 54px; max-height: 140px; resize: vertical; }
+    .composer button { width: 120px; margin: 0; }
 
     @media (max-width: 760px) {
       .app { grid-template-columns: 1fr; }
-
-      aside {
-        border-right: 0;
-        border-bottom: 1px solid #1f2937;
-      }
-
-      main {
-        height: calc(100vh - 310px);
-        min-height: 520px;
-      }
-
+      aside { border-right: 0; border-bottom: 1px solid #1f2937; }
+      main { height: calc(100vh - 390px); min-height: 520px; }
       .composer { flex-direction: column; }
       .composer button { width: 100%; }
     }
@@ -222,15 +71,9 @@
     <div class="login-card">
       <div class="logo">M</div>
       <h1>MOED Creator</h1>
-
       <input id="inviteCode" placeholder="Código de invitación" />
       <button onclick="continueInvite()">Continue</button>
-
-      <p class="muted">
-        Already have an account?
-        <span class="link" onclick="showAuth()">Sign in</span>
-      </p>
-
+      <p class="muted">Already have an account? <span class="link" onclick="showAuth()">Sign in</span></p>
       <p id="inviteError" class="error"></p>
     </div>
   </section>
@@ -239,35 +82,20 @@
     <div class="login-card">
       <div class="logo">M</div>
       <h1>Entrar a MOED</h1>
-
+      <p id="roleText" class="muted"></p>
       <button class="google" onclick="loginGoogle()">Entrar con Google</button>
-
       <p class="muted">O usa email y contraseña</p>
-
       <input id="email" type="email" placeholder="Correo" />
       <input id="password" type="password" placeholder="Contraseña" />
-
-      <select id="role">
-        <option value="visitante">Visitante</option>
-        <option value="moderador">Moderador</option>
-      </select>
-
-      <input id="accessCode" placeholder="Código de acceso" />
-
       <button onclick="loginEmail()">Iniciar sesión</button>
       <button class="secondary" onclick="registerEmail()">Registrarse</button>
-
       <p id="authError" class="error"></p>
     </div>
   </section>
 
   <section id="appScreen" class="app hidden">
     <aside>
-      <div class="brand">
-        <div class="mini-logo">M</div>
-        <span>MOED Creator</span>
-      </div>
-
+      <div class="brand"><div class="mini-logo">M</div><span>MOED Creator</span></div>
       <button onclick="newChat()">Nuevo chat</button>
 
       <div class="panel">
@@ -282,15 +110,16 @@
         <p id="newCode" class="code-result"></p>
       </div>
 
-      <div class="panel muted">
-        MOED Creator<br />
-        mamarcosane · Vento · 2026
+      <div class="panel">
+        <h3>Chats</h3>
+        <div id="chatList" class="chat-list"></div>
       </div>
+
+      <div class="panel muted">MOED Creator<br />mamarcosane · Vento · 2026</div>
     </aside>
 
     <main>
       <div id="chat" class="chat"></div>
-
       <div class="bar">
         <div class="composer">
           <textarea id="message" placeholder="Escribe tu mensaje..."></textarea>
@@ -329,23 +158,39 @@
     let sessionToken = "";
     let currentChatId = "";
     let savedInviteCode = "";
+    let detectedRole = "";
 
-    window.continueInvite = function () {
-      const code = document.getElementById("inviteCode").value.trim();
+    window.continueInvite = async function () {
+      const code = inviteCode.value.trim();
+      inviteError.textContent = "";
 
       if (!code) {
-        document.getElementById("inviteError").textContent = "Pon tu código de invitación.";
+        inviteError.textContent = "Pon tu código de invitación.";
+        return;
+      }
+
+      const res = await fetch("/api/resolve-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        inviteError.textContent = data.error || "Código incorrecto.";
         return;
       }
 
       savedInviteCode = code;
-      document.getElementById("accessCode").value = code;
+      detectedRole = data.role;
       showAuth();
     };
 
     window.showAuth = function () {
-      document.getElementById("inviteScreen").classList.add("hidden");
-      document.getElementById("authScreen").classList.remove("hidden");
+      inviteScreen.classList.add("hidden");
+      authScreen.classList.remove("hidden");
+      roleText.textContent = detectedRole ? "Código detectado: " + detectedRole : "";
     };
 
     window.loginGoogle = async function () {
@@ -355,121 +200,131 @@
         currentUser = result.user;
         await enterMoed();
       } catch (error) {
-        document.getElementById("authError").textContent = error.message;
+        authError.textContent = error.message;
       }
     };
 
     window.registerEmail = async function () {
       try {
         clearErrors();
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const result = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+        const result = await createUserWithEmailAndPassword(firebaseAuth, email.value.trim(), password.value);
         currentUser = result.user;
         await enterMoed();
       } catch (error) {
-        document.getElementById("authError").textContent = error.message;
+        authError.textContent = error.message;
       }
     };
 
     window.loginEmail = async function () {
       try {
         clearErrors();
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const result = await signInWithEmailAndPassword(firebaseAuth, email, password);
+        const result = await signInWithEmailAndPassword(firebaseAuth, email.value.trim(), password.value);
         currentUser = result.user;
         await enterMoed();
       } catch (error) {
-        document.getElementById("authError").textContent = error.message;
+        authError.textContent = error.message;
       }
     };
 
     async function enterMoed() {
       const idToken = await currentUser.getIdToken();
-      const selectedRole = document.getElementById("role").value;
-      const code =
-        document.getElementById("accessCode").value.trim() ||
-        savedInviteCode;
 
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idToken,
-          role: selectedRole,
-          code
-        })
+        body: JSON.stringify({ idToken, code: savedInviteCode })
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        document.getElementById("authError").textContent = data.error || "No se pudo entrar.";
+        authError.textContent = data.error || "No se pudo entrar.";
         return;
       }
 
       sessionToken = data.token;
-
-      document.getElementById("authScreen").classList.add("hidden");
-      document.getElementById("appScreen").classList.remove("hidden");
-      document.getElementById("userInfo").textContent = `${data.name} · ${data.role}`;
+      authScreen.classList.add("hidden");
+      appScreen.classList.remove("hidden");
+      userInfo.textContent = `${data.name} · ${data.role}`;
 
       if (data.role === "moderador") {
-        document.getElementById("modBox").classList.remove("hidden");
+        modBox.classList.remove("hidden");
       } else {
-        document.getElementById("modBox").classList.add("hidden");
+        modBox.classList.add("hidden");
       }
 
       setChat(`MOED Creator: Hola ${data.name}. Estás en modo ${data.role}.`);
+      loadChats();
     }
 
     window.createVisitorCode = async function () {
       const res = await fetch("/api/codes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: sessionToken,
-          label: document.getElementById("codeLabel").value
-        })
+        body: JSON.stringify({ token: sessionToken, label: codeLabel.value })
       });
 
       const data = await res.json();
-
-      document.getElementById("newCode").textContent =
-        data.code ? `Código creado: ${data.code}` : data.error;
+      newCode.textContent = data.code ? `Código creado: ${data.code}` : data.error;
     };
 
     window.sendMessage = async function () {
-      const box = document.getElementById("message");
-      const text = box.value.trim();
-
+      const text = message.value.trim();
       if (!text) return;
 
       addMessage("Tú", text, "you");
-      box.value = "";
-
+      message.value = "";
       addMessage("MOED Creator", "Pensando...", "bot");
 
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: sessionToken,
-          chatId: currentChatId,
-          message: text
-        })
+        body: JSON.stringify({ token: sessionToken, chatId: currentChatId, message: text })
       });
 
       const data = await res.json();
       removeThinking();
 
-      if (data.chatId) {
-        currentChatId = data.chatId;
-      }
+      if (data.chatId) currentChatId = data.chatId;
 
       addMessage("MOED Creator", data.reply || data.error || "Error.", "bot");
+      loadChats();
     };
+
+    async function loadChats() {
+      const res = await fetch("/api/chats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: sessionToken })
+      });
+
+      const data = await res.json();
+      chatList.innerHTML = "";
+
+      (data.chats || []).forEach((item) => {
+        const btn = document.createElement("button");
+        btn.textContent = item.title || "Chat";
+        btn.onclick = () => openChat(item.id);
+        chatList.appendChild(btn);
+      });
+    }
+
+    async function openChat(id) {
+      currentChatId = id;
+
+      const res = await fetch("/api/chat-messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: sessionToken, chatId: id })
+      });
+
+      const data = await res.json();
+      chat.innerHTML = "";
+
+      (data.messages || []).forEach((msg) => {
+        addMessage(msg.role === "user" ? "Tú" : "MOED Creator", msg.text, msg.role === "user" ? "you" : "bot");
+      });
+    }
 
     window.newChat = function () {
       currentChatId = "";
@@ -482,34 +337,26 @@
     };
 
     function clearErrors() {
-      document.getElementById("inviteError").textContent = "";
-      document.getElementById("authError").textContent = "";
+      inviteError.textContent = "";
+      authError.textContent = "";
     }
 
     function setChat(text) {
-      const chat = document.getElementById("chat");
       chat.innerHTML = "";
       addMessage("", text, "bot");
     }
 
     function addMessage(who, text, cls) {
-      const chat = document.getElementById("chat");
       const div = document.createElement("div");
-
       div.className = "msg " + cls;
       div.textContent = who ? `${who}: ${text}` : text;
-
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
 
     function removeThinking() {
-      const chat = document.getElementById("chat");
       const last = chat.lastElementChild;
-
-      if (last && last.textContent.includes("Pensando...")) {
-        last.remove();
-      }
+      if (last && last.textContent.includes("Pensando...")) last.remove();
     }
   </script>
 </body>
