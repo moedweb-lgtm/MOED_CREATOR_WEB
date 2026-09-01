@@ -10,7 +10,9 @@ const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 const MODERATOR_ACCESS_CODE = process.env.MODERATOR_ACCESS_CODE;
 const MOED_KB_URL = process.env.MOED_KB_URL;
 
-const sessions = new Map();
+if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+  throw new Error("Falta FIREBASE_SERVICE_ACCOUNT_JSON en Render.");
+}
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
 
@@ -19,6 +21,7 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+const sessions = new Map();
 
 const FALLBACK_KB = {
   rules: [
@@ -33,7 +36,9 @@ const FALLBACK_KB = {
     },
     moderador: {
       description: "Moderador de MOED.",
-      content: ["Puede gestionar soporte, crear codigos y revisar informacion importante."]
+      content: [
+        "Puede gestionar soporte, crear codigos de visitante y revisar informacion importante."
+      ]
     }
   }
 };
@@ -44,6 +49,25 @@ app.use(express.static("public"));
 async function verifyFirebaseUser(idToken) {
   if (!idToken) throw new Error("Falta sesion de Firebase.");
   return admin.auth().verifyIdToken(idToken);
+}
+
+async function getRoleFromCode(code) {
+  if (!code) return null;
+
+  if (MODERATOR_ACCESS_CODE && code === MODERATOR_ACCESS_CODE) {
+    return "moderador";
+  }
+
+  const doc = await db.collection("accessCodes").doc(code).get();
+  if (!doc.exists) return null;
+
+  const data = doc.data();
+
+  if (data.active === true && data.role === "visitante") {
+    return "visitante";
+  }
+
+  return null;
 }
 
 async function loadKnowledge() {
@@ -72,38 +96,29 @@ function getRoleKnowledge(kb, role) {
     .join("\n");
 }
 
-async function checkVisitorCode(code) {
-  if (!code) return false;
+app.post("/api/resolve-code", async (req, res) => {
+  try {
+    const code = String(req.body?.code || "").trim();
+    const role = await getRoleFromCode(code);
 
-  const doc = await db.collection("accessCodes").doc(code).get();
+    if (!role) {
+      return res.status(401).json({ error: "Codigo incorrecto." });
+    }
 
-  if (!doc.exists) return false;
-
-  const data = doc.data();
-
-  return data.active === true && data.role === "visitante";
-}
+    res.json({ role });
+  } catch (error) {
+    res.status(500).json({ error: error.message || "Error interno." });
+  }
+});
 
 app.post("/api/login", async (req, res) => {
   try {
-    const { idToken, role, code } = req.body || {};
+    const { idToken, code } = req.body || {};
     const user = await verifyFirebaseUser(idToken);
+    const role = await getRoleFromCode(String(code || "").trim());
 
-    if (role !== "visitante" && role !== "moderador") {
-      return res.status(400).json({ error: "Rol no valido." });
-    }
-
-    if (role === "moderador") {
-      if (!MODERATOR_ACCESS_CODE || code !== MODERATOR_ACCESS_CODE) {
-        return res.status(401).json({ error: "Codigo de moderador incorrecto." });
-      }
-    }
-
-    if (role === "visitante") {
-      const valid = await checkVisitorCode(code);
-      if (!valid) {
-        return res.status(401).json({ error: "Codigo de visitante incorrecto." });
-      }
+    if (!role) {
+      return res.status(401).json({ error: "Codigo incorrecto." });
     }
 
     const token = crypto.randomUUID();
@@ -163,6 +178,60 @@ app.post("/api/codes", async (req, res) => {
   }
 });
 
+app.post("/api/chats", async (req, res) => {
+  try {
+    const { token } = req.body || {};
+    const session = sessions.get(token);
+
+    if (!session) {
+      return res.status(401).json({ error: "Sesion no valida." });
+    }
+
+    const snap = await db
+      .collection("users")
+      .doc(session.uid)
+      .collection("chats")
+      .orderBy("updatedAt", "desc")
+      .limit(30)
+      .get();
+
+    const chats = snap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    res.json({ chats });
+  } catch (error) {
+    res.status(500).json({ error: error.message || "No se pudieron cargar chats." });
+  }
+});
+
+app.post("/api/chat-messages", async (req, res) => {
+  try {
+    const { token, chatId } = req.body || {};
+    const session = sessions.get(token);
+
+    if (!session || !chatId) {
+      return res.status(401).json({ error: "Sesion no valida." });
+    }
+
+    const snap = await db
+      .collection("users")
+      .doc(session.uid)
+      .collection("chats")
+      .doc(chatId)
+      .collection("messages")
+      .orderBy("createdAt", "asc")
+      .get();
+
+    const messages = snap.docs.map((doc) => doc.data());
+
+    res.json({ messages });
+  } catch (error) {
+    res.status(500).json({ error: error.message || "No se pudo cargar el chat." });
+  }
+});
+
 app.post("/api/chat", async (req, res) => {
   try {
     const { token, chatId, message } = req.body || {};
@@ -176,47 +245,41 @@ app.post("/api/chat", async (req, res) => {
       return res.status(500).json({ error: "Falta GEMINI_API_KEY en Render." });
     }
 
-    const finalChatId = chatId || crypto.randomUUID();
     const text = String(message || "").trim();
-
     if (!text) {
       return res.status(400).json({ error: "Mensaje vacio." });
     }
 
+    const finalChatId = chatId || crypto.randomUUID();
     const kb = await loadKnowledge();
     const roleKnowledge = getRoleKnowledge(kb, session.role);
 
-    await db
+    const chatRef = db
       .collection("users")
       .doc(session.uid)
       .collection("chats")
-      .doc(finalChatId)
-      .set(
-        {
-          title: text.slice(0, 50),
-          role: session.role,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-      );
+      .doc(finalChatId);
 
-    await db
-      .collection("users")
-      .doc(session.uid)
-      .collection("chats")
-      .doc(finalChatId)
-      .collection("messages")
-      .add({
-        role: "user",
-        text,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+    await chatRef.set(
+      {
+        title: text.slice(0, 60),
+        role: session.role,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    await chatRef.collection("messages").add({
+      role: "user",
+      text,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
 
     const prompt =
       `Eres MOED Creator, una IA tipo ChatGPT para MOED.\n` +
       `Usuario: ${session.name}\n` +
       `Rol: ${session.role}\n\n` +
-      `Responde en espanol claro y util.\n` +
+      `Responde en espanol claro, util y directo.\n` +
       `No inventes informacion. Si falta contexto, pregunta.\n\n` +
       `Informacion de MOED para este rol:\n${roleKnowledge}\n\n` +
       `Mensaje del usuario:\n${text}`;
@@ -245,17 +308,11 @@ app.post("/api/chat", async (req, res) => {
       data.candidates?.[0]?.content?.parts?.[0]?.text ||
       "No pude generar respuesta.";
 
-    await db
-      .collection("users")
-      .doc(session.uid)
-      .collection("chats")
-      .doc(finalChatId)
-      .collection("messages")
-      .add({
-        role: "assistant",
-        text: reply,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+    await chatRef.collection("messages").add({
+      role: "assistant",
+      text: reply,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
 
     res.json({ reply, chatId: finalChatId });
   } catch (error) {
